@@ -15,12 +15,7 @@ ADummyActor::ADummyActor()
 void ADummyActor::BeginPlay()
 {
 	Super::BeginPlay();
-#if USE_LINUX_SPECIFIC_CODE
-	UE_LOG(LogTemp, Warning, TEXT("Hello Linux"));
-#elif  USE_WINDOW_SPECIFIC_CODE
-	UE_LOGLogTemp, Warning, TEXT("Hello Windows");
-#else
-#endif
+	
 }
 
 // Called every frame
