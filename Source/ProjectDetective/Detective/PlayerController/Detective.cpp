@@ -14,13 +14,23 @@
 ADetective::ADetective()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-	PrimaryActorTick.bStartWithTickEnabled = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	Speed = 50.0f;
+	WalkSpeed = 500.0f;
 	MouseSensibility = 0.2f;
+	WalkHeight = 200.0f;
+	PlayerWidth = 90.0f;
+	WalkBobbing = 0.0f;
+	CrouchHeight = 100.0f;
+	CrouchSpeed = 250.0f;
+	CrouchBobbing = 0.0f;
+	bCrouching = false;
+	bIsWalking = false;
 
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	GetCapsuleComponent()->SetCapsuleRadius(PlayerWidth);
+	GetCapsuleComponent()->SetCapsuleSize(PlayerWidth,WalkHeight);
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -41,13 +51,22 @@ ADetective::ADetective()
 void ADetective::BeginPlay()
 {
 	Super::BeginPlay();
-	GetCharacterMovement()->MaxWalkSpeed = Speed;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	GetCapsuleComponent()->SetCapsuleRadius(PlayerWidth);
+	GetCapsuleComponent()->SetCapsuleSize(PlayerWidth,WalkHeight);
+	Camera->FieldOfView = 90.0f;
+	OldCameraLocation = Camera->GetRelativeLocation();
 }
 
 // Called every frame
 void ADetective::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if(DirectionMovement.X == 0.0f || DirectionMovement.Y == 0.0f)
+	{
+		bIsWalking = false;
+	}
 }
 
 
@@ -61,12 +80,15 @@ void ADetective::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	UDetectiveEnhancedInput* LastChecked = CastChecked<UDetectiveEnhancedInput>(PlayerInputComponent);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
+	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Crouch, ETriggerEvent::Triggered, this, &ThisClass::Input_Crouching);
+	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Crouch, ETriggerEvent::Completed, this, &ThisClass::Input_Standing);
 }
 
 
 void ADetective::Input_Move(const FInputActionValue& InputActionValue)
 {
 	const FVector2d Direction = InputActionValue.Get<FVector2d>();
+	DirectionMovement = FVector::ZeroVector;
 	
 	const FRotator Rotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
 
@@ -74,12 +96,16 @@ void ADetective::Input_Move(const FInputActionValue& InputActionValue)
 	{
 		const FVector ForwardDirection = Rotation.RotateVector(FVector::ForwardVector);
 		AddMovementInput(ForwardDirection, Direction.Y );
+		DirectionMovement.Y = Direction.Y;
+		bIsWalking = true;
 	}
 
 	if(Direction.X != 0.f)
 	{
 		const FVector RightDirection = Rotation.RotateVector(FVector::RightVector);
 		AddMovementInput(RightDirection, Direction.X);
+		DirectionMovement.X = Direction.X;
+		bIsWalking = true;
 	}
 	
 }
@@ -99,4 +125,40 @@ void ADetective::Input_Look(const FInputActionValue& InputActionValue)
 		const float ClampedPitch = FMath::Clamp(Pitch, -90.0f, 90.0f);
 		AddControllerPitchInput(ClampedPitch * MouseSensibility);
 	}
+}
+
+void ADetective::Input_Crouching(const FInputActionValue& InputActionValue)
+{
+	const bool bCrouchPressed = InputActionValue.Get<bool>();
+	
+	if(bCrouchPressed)
+	{
+		bCrouching = true;
+		CrouchLocation = OldCameraLocation - FVector(0.f, 0.f, CrouchHeight);
+		Camera->SetRelativeLocation(CrouchLocation);
+		GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchHeight);
+		GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+	}
+}
+
+void ADetective::Input_Standing(const FInputActionValue& InputActionValue)
+{
+	const bool bCrouchPressed = InputActionValue.Get<bool>();
+
+	if(!bCrouchPressed && bCrouching)
+	{
+		bCrouching = false;
+		// const float OriginalZ = FMath::FInterpTo(CrouchLocation.Z, OldCameraLocation.Z, GetWorld()->GetDeltaSeconds(), 6.0f);
+		// const float OriginalY = FMath::FInterpTo(CrouchLocation.Y, OldCameraLocation.Y, GetWorld()->GetDeltaSeconds(), 6.0f);
+		// const float OriginalX = FMath::FInterpTo(CrouchLocation.X, OldCameraLocation.X, GetWorld()->GetDeltaSeconds(), 6.0f);
+		// const FVector OriginalLocation = {OriginalX, OriginalY, OriginalZ};
+		Camera->SetRelativeLocation(OldCameraLocation);
+		GetCapsuleComponent()->SetCapsuleHalfHeight(WalkHeight);
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	}
+}
+
+void ADetective::SimulateHeadBobbing()
+{
+	
 }
