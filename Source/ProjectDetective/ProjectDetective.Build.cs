@@ -16,7 +16,7 @@ public class ProjectDetective : ModuleRules
 		{
 			PublicDefinitions.Add("USE_WINDOWS_SPECIFIC_CODE=1");
 		}
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayTags" });
 		
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		
