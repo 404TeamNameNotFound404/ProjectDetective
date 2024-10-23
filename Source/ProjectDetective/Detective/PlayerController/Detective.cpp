@@ -158,7 +158,3 @@ void ADetective::Input_Standing(const FInputActionValue& InputActionValue)
 	}
 }
 
-void ADetective::SimulateHeadBobbing()
-{
-	
-}

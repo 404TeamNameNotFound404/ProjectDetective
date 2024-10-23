@@ -53,6 +53,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Movement", meta = (AllowPrivateAccess = "true"))
 	bool bIsWalking;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Movement", meta = (AllowPrivateAccess = "true"))
+	FVector DirectionMovement;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, category = "Body", meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
 
@@ -61,22 +64,19 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Body", meta = (AllowPrivateAccess = "true"))
 	UDetectiveInputDataAsset* InputDataAsset;
-
+	
+	
 	UPROPERTY()
 	FVector OldCameraLocation;
 	
 	UPROPERTY()
 	FVector CrouchLocation;
 
-	UPROPERTY()
-	FVector DirectionMovement;
 	
 	void Input_Move(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
 	void Input_Crouching(const FInputActionValue& InputActionValue);
 	void Input_Standing(const FInputActionValue& InputActionValue);
-	
-	void SimulateHeadBobbing();
 	
 public:
 	// Called every frame
