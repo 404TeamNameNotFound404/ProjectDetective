@@ -62,11 +62,7 @@ void ADetective::BeginPlay()
 void ADetective::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if(DirectionMovement.X == 0.0f || DirectionMovement.Y == 0.0f)
-	{
-		bIsWalking = false;
-	}
+	
 }
 
 
@@ -79,6 +75,7 @@ void ADetective::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	SubSystem->AddMappingContext(InputDataAsset->DefaultMappingContext, 0);
 	UDetectiveEnhancedInput* LastChecked = CastChecked<UDetectiveEnhancedInput>(PlayerInputComponent);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
+	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Move, ETriggerEvent::Completed, this, &ThisClass::Input_StopMove);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Crouch, ETriggerEvent::Triggered, this, &ThisClass::Input_Crouching);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Crouch, ETriggerEvent::Completed, this, &ThisClass::Input_Standing);
@@ -91,7 +88,7 @@ void ADetective::Input_Move(const FInputActionValue& InputActionValue)
 	DirectionMovement = FVector::ZeroVector;
 	
 	const FRotator Rotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
-
+	
 	if(Direction.Y != 0.f)
 	{
 		const FVector ForwardDirection = Rotation.RotateVector(FVector::ForwardVector);
@@ -99,7 +96,7 @@ void ADetective::Input_Move(const FInputActionValue& InputActionValue)
 		DirectionMovement.Y = Direction.Y;
 		bIsWalking = true;
 	}
-
+	
 	if(Direction.X != 0.f)
 	{
 		const FVector RightDirection = Rotation.RotateVector(FVector::RightVector);
@@ -108,6 +105,17 @@ void ADetective::Input_Move(const FInputActionValue& InputActionValue)
 		bIsWalking = true;
 	}
 	
+	bIsWalking = Direction.X != 0.f || Direction.Y != 0.f;
+}
+
+void ADetective::Input_StopMove(const FInputActionValue& InputActionValue)
+{
+	const FVector2d Direction = InputActionValue.Get<FVector2d>();
+	
+	if(Direction.X == 0.f || Direction.Y == 0.f)
+	{
+		bIsWalking = false;
+	}
 }
 
 void ADetective::Input_Look(const FInputActionValue& InputActionValue)
@@ -148,10 +156,6 @@ void ADetective::Input_Standing(const FInputActionValue& InputActionValue)
 	if(!bCrouchPressed && bCrouching)
 	{
 		bCrouching = false;
-		// const float OriginalZ = FMath::FInterpTo(CrouchLocation.Z, OldCameraLocation.Z, GetWorld()->GetDeltaSeconds(), 6.0f);
-		// const float OriginalY = FMath::FInterpTo(CrouchLocation.Y, OldCameraLocation.Y, GetWorld()->GetDeltaSeconds(), 6.0f);
-		// const float OriginalX = FMath::FInterpTo(CrouchLocation.X, OldCameraLocation.X, GetWorld()->GetDeltaSeconds(), 6.0f);
-		// const FVector OriginalLocation = {OriginalX, OriginalY, OriginalZ};
 		Camera->SetRelativeLocation(OldCameraLocation);
 		GetCapsuleComponent()->SetCapsuleHalfHeight(WalkHeight);
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
