@@ -74,6 +74,7 @@ private:
 
 	
 	void Input_Move(const FInputActionValue& InputActionValue);
+	void Input_StopMove(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
 	void Input_Crouching(const FInputActionValue& InputActionValue);
 	void Input_Standing(const FInputActionValue& InputActionValue);
