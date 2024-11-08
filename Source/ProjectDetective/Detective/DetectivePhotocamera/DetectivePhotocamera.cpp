@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "../PlayerController/Detective.h"
 #include "DetectivePhotocamera.h"
+#include "../PlayerController/Detective.h"
 
 
 // Sets default values
