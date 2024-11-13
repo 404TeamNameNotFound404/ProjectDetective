@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../Controller/Tags/DetectiveGameplayTags.h"
 #include "ProjectDetective/Detective/Controller/DetectiveController.h"
+#include "../EvidenceSystem/EvidenceSystem.h"
 
 
 // Sets default values
@@ -250,6 +251,13 @@ void ADetective::Input_TakePhoto(const FInputActionValue& InputActionValue)
 	{
 		DetectivePhotocamera->bCanTakePhoto = true;
 		FScreenshotRequest::RequestScreenshot(false);
+
+		EvidenceSystem::FindClue(GetWorld(), this);
+
+		if(EvidenceSystem::IsEvidenceValid(this))
+		{
+			//TODO SAVE IT TO INVENTORY AS CLUE EVIDENCE OTHERWISE CRIME SCENE
+		}
 
 		if (GEngine)
 		{

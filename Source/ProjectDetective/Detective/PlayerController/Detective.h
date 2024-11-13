@@ -66,7 +66,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Body", meta = (AllowPrivateAccess = "true"))
 	UDetectiveInputDataAsset* InputDataAsset;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Body", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Evidence System", meta = (AllowPrivateAccess = "true"))
 	ADetectivePhotocamera* DetectivePhotocamera;
 
 	UPROPERTY()
@@ -108,7 +108,7 @@ public:
 
 	void SetWalkSpeed(float NewSpeed);
 
-
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Evidence System")
+	float RayLenght;
 
 };
