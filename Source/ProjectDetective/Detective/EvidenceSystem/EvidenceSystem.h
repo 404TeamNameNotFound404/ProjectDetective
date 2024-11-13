@@ -15,12 +15,16 @@ class PROJECTDETECTIVE_API EvidenceSystem
 
 private:
  static bool IsEvidenceNotNull();
+ static TArray<AActor*> IgnoredActors;
+ static bool bActorFound;
  
 public:
  static AActor* FindClue(const UWorld* World, ADetective* Detective);
  static bool IsEvidenceValid(ADetective* Detective);
+ static void AddActorToIgnore(AActor* IgnoredActor);
+ static void ConeCastTrace(UWorld* World, FVector Origin, FVector Direction, float Range, float Radius, ADetective* Detective);
  static FVector HitPoint;
  static AActor* Who;
  static UBoxComponent* Box;
- static bool bActorFound;
+ static bool bEvidenceFound;
 };

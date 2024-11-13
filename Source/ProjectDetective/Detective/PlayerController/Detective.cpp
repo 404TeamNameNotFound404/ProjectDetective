@@ -63,8 +63,7 @@ void ADetective::BeginPlay()
 	OldCameraLocation = Camera->GetRelativeLocation();
 
 	DetectivePhotocamera->LastFOV = Camera->FieldOfView;
-
-	
+	EvidenceSystem::AddActorToIgnore(this);
 }
 
 // Called every frame
@@ -252,11 +251,13 @@ void ADetective::Input_TakePhoto(const FInputActionValue& InputActionValue)
 		DetectivePhotocamera->bCanTakePhoto = true;
 		FScreenshotRequest::RequestScreenshot(false);
 
-		EvidenceSystem::FindClue(GetWorld(), this);
+		//EvidenceSystem::FindClue(GetWorld(), this);
+		EvidenceSystem::ConeCastTrace(GetWorld(), Camera->GetComponentLocation(), Camera->GetComponentRotation().Vector() , 1000.f, RayLenght, this);
 
-		if(EvidenceSystem::IsEvidenceValid(this))
+		if(EvidenceSystem::bEvidenceFound)
 		{
 			//TODO SAVE IT TO INVENTORY AS CLUE EVIDENCE OTHERWISE CRIME SCENE
+			EvidenceSystem::bEvidenceFound = false;
 		}
 
 		if (GEngine)
