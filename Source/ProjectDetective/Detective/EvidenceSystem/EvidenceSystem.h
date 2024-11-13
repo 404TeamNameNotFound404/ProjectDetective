@@ -17,6 +17,8 @@ private:
  static bool IsEvidenceNotNull();
  static TArray<AActor*> IgnoredActors;
  static bool bActorFound;
+ static float DistanceMinPercentage;
+ static bool AmISeeingEvidence(ADetective* Detective, const AActor* Evidence);
  
 public:
  static AActor* FindClue(const UWorld* World, ADetective* Detective);

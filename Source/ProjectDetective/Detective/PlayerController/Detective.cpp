@@ -252,7 +252,7 @@ void ADetective::Input_TakePhoto(const FInputActionValue& InputActionValue)
 		FScreenshotRequest::RequestScreenshot(false);
 
 		//EvidenceSystem::FindClue(GetWorld(), this);
-		EvidenceSystem::ConeCastTrace(GetWorld(), Camera->GetComponentLocation(), Camera->GetComponentRotation().Vector() , 1000.f, RayLenght, this);
+		EvidenceSystem::ConeCastTrace(GetWorld(), Camera->GetComponentLocation(), Camera->GetForwardVector() , 1000.f, RayLenght, this);
 
 		if(EvidenceSystem::bEvidenceFound)
 		{

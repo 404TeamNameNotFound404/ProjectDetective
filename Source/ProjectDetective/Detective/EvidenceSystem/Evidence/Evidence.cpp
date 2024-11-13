@@ -17,7 +17,6 @@ AEvidence::AEvidence()
 void AEvidence::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame

@@ -10,6 +10,7 @@ UBoxComponent* EvidenceSystem::Box;
 bool EvidenceSystem::bActorFound;
 TArray<AActor*> EvidenceSystem::IgnoredActors;
 bool EvidenceSystem::bEvidenceFound;
+float EvidenceSystem::DistanceMinPercentage;
 
 
 void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direction, float Range, float Radius, ADetective* Detective)
@@ -19,7 +20,7 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 	TArray<FHitResult> Hits;
 	const FVector End = Origin + Direction * Range;
 	const float FOV = Detective->GetCamera()->FieldOfView;
-	const float ConeAngleRadians = FMath::DegreesToRadians(FOV * 2);  // The FOV defines the cone's spread
+	const float ConeAngleRadians = FMath::DegreesToRadians(FOV);  // The FOV defines the cone's spread
 
 	bool bHit = World->SweepMultiByChannel(Hits, Origin, End, FQuat::Identity, ECC_Visibility, SphereShape, Params);
 	DrawDebugLine(World, Origin, End, FColor::Purple, false, 6.f);
@@ -44,7 +45,7 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 				if (Hit.GetActor()->ActorHasTag("Evidence"))
 				{
 					Box = Cast<UBoxComponent>(Hit.GetComponent());
-					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, TEXT("Found evidence via conecast"));
+					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, TEXT("Found evidence via conecast"));
 					bActorFound = true;
 					Who = Hit.GetActor();
 				}
@@ -57,12 +58,18 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 		const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - Who->GetActorLocation()).Length();
 		const float BoxTargetRadius = EvidenceLocation * 0.5f;
 		const float BoxAngularSize = FMath::RadiansToDegrees(2 * FMath::Atan2(BoxTargetRadius, EvidenceLocation));
-		const float DistanceMinPercentage = (EvidenceLocation * 5.0f) / 100.f;
+		DistanceMinPercentage = (EvidenceLocation * 5.0f) / 100.f;
 		const float DistanceMaxPercentage = (EvidenceLocation * 75.0f) / 100.f;
 
+		if(!AmISeeingEvidence(Detective, Who))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::White, TEXT("I'm not seeing any evidence"));
+			return;
+		}
+		
 		if (BoxAngularSize <= DistanceMinPercentage + FOV || BoxAngularSize >= DistanceMaxPercentage + FOV)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, TEXT("Evidence valid"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, TEXT("Evidence valid"));
 			bEvidenceFound = true;
 		}
 
@@ -71,6 +78,13 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 }
 
 
+bool EvidenceSystem::AmISeeingEvidence(ADetective* Detective, const AActor* Evidence)
+{
+	const FVector CameraForward = Detective->GetCamera()->GetForwardVector();
+	const FVector Distance = Evidence->GetActorLocation() - Detective->GetCamera()->GetComponentLocation();
+	const float Seen = static_cast<float>(FVector::DotProduct(CameraForward, Distance));
+	return Seen >= DistanceMinPercentage;
+}
 
 AActor* EvidenceSystem::FindClue(const UWorld* World, ADetective* Detective)
 {
@@ -118,7 +132,7 @@ bool EvidenceSystem::IsEvidenceValid(ADetective* Detective)
 	const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - Who->GetActorLocation()).Length();
 	const float BoxTargetRadius = EvidenceLocation * 0.5f;
 	const float BoxAngularSize = FMath::RadiansToDegrees(2 * FMath::Atan2(BoxTargetRadius, EvidenceLocation));
-	const float DistanceMinPercentage = (EvidenceLocation * 5.0f) / 100.f;
+	DistanceMinPercentage = (EvidenceLocation * 5.0f) / 100.f;
 	const float DistanceMaxPercentage = (EvidenceLocation * 75.0f) / 100.f;
 	
 	if(!IsEvidenceNotNull())
