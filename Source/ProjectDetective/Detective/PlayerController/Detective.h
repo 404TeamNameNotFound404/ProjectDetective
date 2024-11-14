@@ -111,4 +111,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Evidence System")
 	float RayLenght;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Evidence System")
+	float ConeSize = 10.f;
+
 };

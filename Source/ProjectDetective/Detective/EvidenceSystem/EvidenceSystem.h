@@ -23,10 +23,13 @@ private:
 public:
  static AActor* FindClue(const UWorld* World, ADetective* Detective);
  static bool IsEvidenceValid(ADetective* Detective);
- static void AddActorToIgnore(AActor* IgnoredActor);
  static void ConeCastTrace(UWorld* World, FVector Origin, FVector Direction, float Range, float Radius, ADetective* Detective);
+ static void AddActorToIgnore(AActor* IgnoredActor);
  static FVector HitPoint;
  static AActor* Who;
  static UBoxComponent* Box;
  static bool bEvidenceFound;
+ 
+ 
+ 
 };

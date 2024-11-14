@@ -20,9 +20,9 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 	TArray<FHitResult> Hits;
 	const FVector End = Origin + Direction * Range;
 	const float FOV = Detective->GetCamera()->FieldOfView;
-	const float ConeAngleRadians = FMath::DegreesToRadians(FOV);  // The FOV defines the cone's spread
-
-	bool bHit = World->SweepMultiByChannel(Hits, Origin, End, FQuat::Identity, ECC_Visibility, SphereShape, Params);
+	const float ConeAngleRadians = FMath::DegreesToRadians(FOV * Detective->ConeSize);  // The FOV defines the cone's spread
+	Params.AddIgnoredActors(IgnoredActors);
+	bool bHit = World->SweepMultiByChannel(Hits, Origin, End, FQuat::Identity, ECC_GameTraceChannel1, SphereShape, Params);
 	DrawDebugLine(World, Origin, End, FColor::Purple, false, 6.f);
 
 	if (bHit)
@@ -39,7 +39,8 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
          
 				if (Hit.GetActor()->ActorHasTag("Obstacle"))
 				{
-					break; // if collides with walls or doors or whatever it instantly cut the detection
+					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Turquoise, TEXT("Hitting an obstacle.. continuing"));
+					continue; // if collides with walls or doors or whatever it instantly cut the detection
 				}
                 
 				if (Hit.GetActor()->ActorHasTag("Evidence"))
@@ -48,6 +49,7 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, TEXT("Found evidence via conecast"));
 					bActorFound = true;
 					Who = Hit.GetActor();
+					break;
 				}
 			} 
 		}
@@ -58,8 +60,8 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 		const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - Who->GetActorLocation()).Length();
 		const float BoxTargetRadius = EvidenceLocation * 0.5f;
 		const float BoxAngularSize = FMath::RadiansToDegrees(2 * FMath::Atan2(BoxTargetRadius, EvidenceLocation));
-		DistanceMinPercentage = (EvidenceLocation * 5.0f) / 100.f;
-		const float DistanceMaxPercentage = (EvidenceLocation * 75.0f) / 100.f;
+		DistanceMinPercentage = (EvidenceLocation * 75.0f) / 100.f;
+		const float DistanceMaxPercentage = (EvidenceLocation * 90.0f) / 100.f;
 
 		if(!AmISeeingEvidence(Detective, Who))
 		{
@@ -70,6 +72,7 @@ void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direct
 		if (BoxAngularSize <= DistanceMinPercentage + FOV || BoxAngularSize >= DistanceMaxPercentage + FOV)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, TEXT("Evidence valid"));
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, FString::Printf(TEXT("EvidenceInPhotoPercentage %f"), DistanceMinPercentage));
 			bEvidenceFound = true;
 		}
 
