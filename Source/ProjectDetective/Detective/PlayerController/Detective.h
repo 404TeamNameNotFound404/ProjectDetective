@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "../DetectivePhotocamera/DetectivePhotocamera.h"
+#include "../EvidenceSystem/EvidenceManager.h"
 #include "Detective.generated.h"
 
 UCLASS(Blueprintable)

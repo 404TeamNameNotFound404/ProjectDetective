@@ -5,31 +5,35 @@
 #include "CoreMinimal.h"
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
+#include "Engine/StaticMeshActor.h"
 
 /**
  * 
  */
 class ADetective;
+class ASceneActor;
+
 class PROJECTDETECTIVE_API EvidenceSystem
 {
 
 private:
  static bool IsEvidenceNotNull();
- static TArray<AActor*> IgnoredActors;
  static bool bActorFound;
  static float DistanceMinPercentage;
+ static ASceneActor* SceneActorDetected;
  static bool AmISeeingEvidence(ADetective* Detective, const AActor* Evidence);
  
 public:
- static AActor* FindClue(const UWorld* World, ADetective* Detective);
  static bool IsEvidenceValid(ADetective* Detective);
  static void ConeCastTrace(UWorld* World, FVector Origin, FVector Direction, float Range, float Radius, ADetective* Detective);
- static void AddActorToIgnore(AActor* IgnoredActor);
+ static void ObstacleConeCastTrace(const UWorld* World, const FVector Origin, const FVector Direction, const float Range, const float Radius,  ADetective* Detective);
+ static FCollisionQueryParams Params;
  static FVector HitPoint;
  static AActor* Who;
  static UBoxComponent* Box;
+ static TArray<TSoftObjectPtr<AActor>> IgnoredActors;
+ static TArray<UStaticMesh> IgnoredSceneAssets;
  static bool bEvidenceFound;
- 
- 
+ static bool bObstacleFound;
  
 };

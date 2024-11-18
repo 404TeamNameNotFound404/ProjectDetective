@@ -19,6 +19,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Scene Actor", meta=(AllowPrivateAccess = "true"))
+	FName AssignableTag;
+	
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
