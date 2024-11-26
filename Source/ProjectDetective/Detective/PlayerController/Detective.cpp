@@ -249,14 +249,13 @@ void ADetective::Input_TakePhoto(const FInputActionValue& InputActionValue)
 	{
 		DetectivePhotocamera->bCanTakePhoto = true;
 		FScreenshotRequest::RequestScreenshot(false);
-
-		//EvidenceSystem::FindClue(GetWorld(), this);
-		EvidenceSystem::ObstacleConeCastTrace(GetWorld(), Camera->GetComponentLocation(), Camera->GetForwardVector(), 1000.f, RayLenght, this);
-		EvidenceSystem::ConeCastTrace(GetWorld(), Camera->GetComponentLocation(), Camera->GetForwardVector() , 1000.f, RayLenght, this);
+		
+		EvidenceSystem::ConeCastTraceWithoutSweep(GetWorld(), Camera->GetComponentLocation(), Camera->GetForwardVector(), 1000.f, RayLenght, this);
 		
 		if(EvidenceSystem::bEvidenceFound)
 		{
 			//TODO SAVE IT TO INVENTORY AS CLUE EVIDENCE OTHERWISE CRIME SCENE
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Turquoise, TEXT("Evidence saved to inventory"));
 			EvidenceSystem::bEvidenceFound = false;
 		}
 

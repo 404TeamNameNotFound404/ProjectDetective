@@ -4,6 +4,7 @@
 #include "EvidenceSystem.h"
 #include "../PlayerController/Detective.h"
 #include "../Props/SceneActors/SceneActor.h"
+#include "Engine/OverlapResult.h"
 
 FVector EvidenceSystem::HitPoint;
 AActor* EvidenceSystem::Who;
@@ -16,132 +17,113 @@ ASceneActor* EvidenceSystem::SceneActorDetected;
 bool EvidenceSystem::bObstacleFound;
 TArray<UStaticMesh> EvidenceSystem::IgnoredSceneAssets;
 FCollisionQueryParams EvidenceSystem::Params;
+float EvidenceSystem::HitEvidenceWallDistance;
+AActor* EvidenceSystem::HitEvidenceWallActor;
+AActor* EvidenceSystem::ActorDetected;
+AActor* EvidenceSystem::MathWho;
+bool EvidenceSystem::bEvidenceFirst;
 
-void EvidenceSystem::ConeCastTrace(UWorld* World, FVector Origin, FVector Direction, float Range, float Radius, ADetective* Detective)
+
+
+void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FVector Direction, float Range, float ConeAngle, ADetective* Detective)
 {
-	FCollisionShape SphereShape = FCollisionShape::MakeSphere(Radius);
-	FCollisionQueryParams Params1;
-	TArray<FHitResult> Hits;
-	const FVector End = Origin + Direction * Range;
-	const float FOV = Detective->GetCamera()->FieldOfView;
-	const float ConeAngleRadians = FMath::DegreesToRadians(FOV * Detective->ConeSize);  // The FOV defines the cone's spread
-	//Params.AddIgnoredActors(IgnoredActors);
-	bool bHit = World->SweepMultiByChannel(Hits, Origin, End, FQuat::Identity, ECC_GameTraceChannel1, SphereShape, Params1);
-	DrawDebugLine(World, Origin, End, FColor::Purple, false, 6.f);
+    TArray<FHitResult> HitResults;
+    const int32 NumTraces = 64; 
+    const float AngleIncrement = ConeAngle / NumTraces;
+    TMap<AActor*, float> VisibilityScores; 
+    int32 TotalHits = 0;
 
-	if (bHit)
-	{
-		for (const FHitResult& Hit : Hits)
-		{
-			FVector HitDirection = Hit.ImpactPoint - Origin;
-			HitDirection.Normalize();
-			const float Angle = FMath::Acos(FVector::DotProduct(HitDirection, Direction));
-			
-			if (Angle <= ConeAngleRadians)
-			{
-				DrawDebugLine(World, Origin, Hit.ImpactPoint, FColor::Orange, false, 6.f);
-				
-				if (Hit.GetActor()->ActorHasTag("Evidence"))
-				{
-					Box = Cast<UBoxComponent>(Hit.GetComponent());
-					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, TEXT("Found evidence via conecast"));
-					bActorFound = true;
-					Who = Hit.GetActor();
-					break;
-				}
-			} 
-		}
-	}
+    for (const auto& Actor : IgnoredActors)
+    {
+        if (Actor.IsValid())
+        {
+            Params.AddIgnoredActor(Actor.Get());
+        }
+    }
 
-	if(bActorFound && Who != nullptr)
-	{
-		const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - Who->GetActorLocation()).Length();
-		const float BoxTargetRadius = EvidenceLocation * 0.5f;
-		const float BoxAngularSize = FMath::RadiansToDegrees(2 * FMath::Atan2(BoxTargetRadius, EvidenceLocation));
-		DistanceMinPercentage = (EvidenceLocation * 75.0f) / 100.f;
-		const float DistanceMaxPercentage = (EvidenceLocation * 90.0f) / 100.f;
+    for (int32 i = -NumTraces / 2; i <= NumTraces / 2; ++i)
+    {
+        
+        FRotator Rotation = FRotator(0, i * AngleIncrement, 0);
+        FVector TraceDirection = Rotation.RotateVector(Direction);
 
-		if(!AmISeeingEvidence(Detective, Who) || bObstacleFound)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::White, TEXT("I'm not seeing any evidence"));
-			bObstacleFound = false;
-			return;
-		}
-		
-		if (BoxAngularSize <= DistanceMinPercentage + FOV || BoxAngularSize >= DistanceMaxPercentage + FOV)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, TEXT("Evidence valid"));
-			//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, FString::Printf(TEXT("EvidenceInPhotoPercentage %f"), DistanceMinPercentage));
-			bEvidenceFound = true;
-		}
+        
+        FHitResult HitResult;
+        FVector End = Origin + TraceDirection * Range;
+        bool bHit = World->LineTraceSingleByChannel(HitResult, Origin, End, ECC_Visibility, Params);
 
-		bActorFound = false;
-	}
+        if (bHit)
+        {
+            HitResults.Add(HitResult);
+            TotalHits++;
+            DrawDebugLine(World, Origin, End, FColor::Purple, false, 6.f);
+
+            AActor* HitActor = HitResult.GetActor();
+            if (HitActor)
+            {
+                float& Score = VisibilityScores.FindOrAdd(HitActor);
+                Score += 1.0f / TotalHits; 
+                
+                if (HitActor->ActorHasTag("Evidence"))
+                {
+                    DrawDebugPoint(World, HitResult.ImpactPoint, 50.f, FColor::Turquoise, false, 10.0f);
+                }
+                else
+                {
+                    DrawDebugPoint(World, HitResult.ImpactPoint, 50.f, FColor::Red, false, 10.0f);
+                }
+            }
+        }
+    }
+
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, FString::Printf(TEXT("Total Hits: %d"), TotalHits));
+
+    // Determine the most visible evidence
+    AActor* MostVisibleEvidence = nullptr;
+    float HighestScore = 0.0f;
+    for (auto& Elem : VisibilityScores)
+    {
+        AActor* Actor = Elem.Key;
+        float Score = Elem.Value;
+        if (Actor->ActorHasTag("Evidence") && Score > HighestScore)
+        {
+            HighestScore = Score;
+            MostVisibleEvidence = Actor;
+        }
+    }
+
+    if (MostVisibleEvidence && HighestScore >= 0.75f)
+    {
+        const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - MostVisibleEvidence->GetActorLocation()).Size();
+        const float BoxTargetRadius = EvidenceLocation * 0.5f;
+        const float BoxAngularSize = FMath::RadiansToDegrees(2 * FMath::Atan2(BoxTargetRadius, EvidenceLocation));
+        DistanceMinPercentage = (EvidenceLocation * 75.0f) / 100.f;
+        const float DistanceMaxPercentage = (EvidenceLocation * 90.0f) / 100.f;
+
+        if (!AmISeeingEvidence(Detective, MostVisibleEvidence))
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::White, TEXT("I'm not seeing any evidence"));
+            return;
+        }
+
+        // Validate evidence considering its visibility score and angular size
+        if ((BoxAngularSize <= DistanceMinPercentage + Detective->GetCamera()->FieldOfView))
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, TEXT("Evidence valid"));
+            GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, FString::Printf(TEXT("EvidenceInPhotoPercentage %f"), DistanceMinPercentage));
+            bEvidenceFound = true;
+        }
+        else
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("Evidence not valid"));
+        }
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("No evidence found"));
+    }
 }
 
-void EvidenceSystem::ObstacleConeCastTrace(const UWorld* World, const FVector Origin, const FVector Direction, const float Range, const float Radius,  ADetective* Detective)
-{
-	FCollisionShape SphereShape = FCollisionShape::MakeSphere(Radius);
-	TArray<FHitResult> Hits;
-	const FVector End = Origin + Direction * Range;
-	const float FOV = Detective->GetCamera()->FieldOfView;
-	const float ConeAngleRadians = FMath::DegreesToRadians(FOV * Detective->ConeSize);  // The FOV defines the cone's spread
-
-	for(const auto& Actor : IgnoredActors)
-	{
-		if(Actor.IsValid())
-		{
-			Params.AddIgnoredActor(Actor.Get());
-		}
-	}
-	
-	bool bHit = World->SweepMultiByChannel(Hits, Origin, End, FQuat::Identity, ECC_Visibility, SphereShape, Params);
-	DrawDebugLine(World, Origin, End, FColor::Silver, false, 6.f);
-	
-	if(bHit)
-	{
-		for (const FHitResult& Hit : Hits)
-		{
-			FVector HitDirection = Hit.ImpactPoint - Origin;
-			HitDirection.Normalize();
-			const float Angle = FMath::Acos(FVector::DotProduct(HitDirection, Direction));
-			
-			if (Angle <= ConeAngleRadians)
-			{
-				DrawDebugLine(World, Origin, Hit.ImpactPoint, FColor::Silver, false, 6.f);
-
-				if(Hit.GetActor()->ActorHasTag("Evidence"))
-				{
-					continue;
-				}
-				
-				SceneActorDetected = Cast<ASceneActor>(Hit.GetActor());
-				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, TEXT("Found a wall via conecast"));
-				bObstacleFound = true;
-				break;
-			} 
-		}
-	}
-
-	if(SceneActorDetected != nullptr && bObstacleFound)
-	{
-		const float ObstacleLocation = (Detective->GetCamera()->GetComponentLocation() - SceneActorDetected->GetActorLocation()).Length();
-		const float BoxTargetRadius = ObstacleLocation * 0.5f;
-		const float BoxAngularSize = FMath::RadiansToDegrees(2 * FMath::Atan2(BoxTargetRadius, ObstacleLocation));
-		//const float Threshold = (ObstacleLocation * 5.f) / 100.f;
-
-		if(ObstacleLocation < DistanceMinPercentage)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, TEXT("hitting evidence first"));
-			bObstacleFound = false;
-		}
-		
-		if(BoxAngularSize > DistanceMinPercentage)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, TEXT("hitting wall first"));
-		}
-	}
-}
 
 
 
@@ -154,7 +136,6 @@ bool EvidenceSystem::AmISeeingEvidence(ADetective* Detective, const AActor* Evid
 	const float Seen = static_cast<float>(FVector::DotProduct(CameraForward, Distance));
 	return Seen >= DistanceMinPercentage;
 }
-
 
 bool EvidenceSystem::IsEvidenceValid(ADetective* Detective)
 {

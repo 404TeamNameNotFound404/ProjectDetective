@@ -21,12 +21,17 @@ private:
  static bool bActorFound;
  static float DistanceMinPercentage;
  static ASceneActor* SceneActorDetected;
+ static AActor* ActorDetected;
  static bool AmISeeingEvidence(ADetective* Detective, const AActor* Evidence);
+ static AActor* MathWho;
+ static float HitEvidenceWallDistance;
+ static AActor* HitEvidenceWallActor;
+ static bool bEvidenceFirst;
+
  
 public:
- static bool IsEvidenceValid(ADetective* Detective);
- static void ConeCastTrace(UWorld* World, FVector Origin, FVector Direction, float Range, float Radius, ADetective* Detective);
- static void ObstacleConeCastTrace(const UWorld* World, const FVector Origin, const FVector Direction, const float Range, const float Radius,  ADetective* Detective);
+ static bool IsEvidenceValid(ADetective* Detective); // TODO set origin and direction of the function as reference to avoid copy objects 
+ static void ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FVector Direction, float Range, float ConeAngle, ADetective* Detective);
  static FCollisionQueryParams Params;
  static FVector HitPoint;
  static AActor* Who;
