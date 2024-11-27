@@ -81,6 +81,7 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
     // Determine the most visible evidence
     AActor* MostVisibleEvidence = nullptr;
     float HighestScore = 0.0f;
+	
     for (auto& Elem : VisibilityScores)
     {
         AActor* Actor = Elem.Key;
@@ -92,7 +93,7 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
         }
     }
 
-    if (MostVisibleEvidence && HighestScore >= 0.75f)
+    if (MostVisibleEvidence && HighestScore >= 0.15f) // 0.75f
     {
         const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - MostVisibleEvidence->GetActorLocation()).Size();
         const float BoxTargetRadius = EvidenceLocation * 0.5f;
