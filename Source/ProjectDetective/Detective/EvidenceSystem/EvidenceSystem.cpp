@@ -25,12 +25,112 @@ bool EvidenceSystem::bEvidenceFirst;
 
 
 
+// void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FVector Direction, float Range, float ConeAngle, ADetective* Detective)
+// {
+//     TArray<FHitResult> HitResults;
+//     const int32 NumTraces = 200; // 64 default value 
+//     const float AngleIncrement = ConeAngle / NumTraces;
+//     TMap<AActor*, float> VisibilityScores; 
+//     int32 TotalHits = 0;
+//
+//     for (const auto& Actor : IgnoredActors)
+//     {
+//         if (Actor.IsValid())
+//         {
+//             Params.AddIgnoredActor(Actor.Get());
+//         }
+//     }
+//
+//     for (int32 i = -NumTraces / 2; i <= NumTraces / 2; ++i)
+//     {
+//         
+//         FRotator Rotation = FRotator(0, i * AngleIncrement, 0);
+//         FVector TraceDirection = Rotation.RotateVector(Direction);
+//
+//         
+//         FHitResult HitResult;
+//         FVector End = Origin + TraceDirection * Range;
+//         bool bHit = World->LineTraceSingleByChannel(HitResult, Origin, End, ECC_Visibility, Params);
+//
+//         if (bHit)
+//         {
+//             HitResults.Add(HitResult);
+//             TotalHits++;
+//             DrawDebugLine(World, Origin, End, FColor::Purple, false, 6.f);
+//
+//             AActor* HitActor = HitResult.GetActor();
+//             if (HitActor)
+//             {
+//                 float& Score = VisibilityScores.FindOrAdd(HitActor);
+//                 Score += 1.0f / TotalHits; 
+//                 
+//                 if (HitActor->ActorHasTag("Evidence"))
+//                 {
+//                     DrawDebugPoint(World, HitResult.ImpactPoint, 50.f, FColor::Turquoise, false, 10.0f);
+//                 }
+//                 else
+//                 {
+//                     DrawDebugPoint(World, HitResult.ImpactPoint, 50.f, FColor::Red, false, 10.0f);
+//                 }
+//             }
+//         }
+//     }
+//
+//     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, FString::Printf(TEXT("Total Hits: %d"), TotalHits));
+//
+//     // Determine the most visible evidence
+//     AActor* MostVisibleEvidence = nullptr;
+//     float HighestScore = 0.0f;
+// 	
+//     for (auto& Elem : VisibilityScores)
+//     {
+//         AActor* Actor = Elem.Key;
+//         float Score = Elem.Value;
+//         if (Actor->ActorHasTag("Evidence") && Score > HighestScore)
+//         {
+//             HighestScore = Score;
+//             MostVisibleEvidence = Actor;
+//         }
+//     }
+//
+//     if (MostVisibleEvidence && HighestScore >= 0.15f) // 0.75f
+//     {
+//         const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - MostVisibleEvidence->GetActorLocation()).Size();
+//         const float BoxTargetRadius = EvidenceLocation * 0.5f;
+//         const float BoxAngularSize = FMath::RadiansToDegrees(2 * FMath::Atan2(BoxTargetRadius, EvidenceLocation));
+//         DistanceMinPercentage = (EvidenceLocation * 75.0f) / 100.f;
+//         const float DistanceMaxPercentage = (EvidenceLocation * 90.0f) / 100.f;
+//
+//         if (!AmISeeingEvidence(Detective, MostVisibleEvidence))
+//         {
+//             GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::White, TEXT("I'm not seeing any evidence"));
+//             return;
+//         }
+//
+//         // Validate evidence considering its visibility score and angular size
+//         if ((BoxAngularSize <= DistanceMinPercentage + Detective->GetCamera()->FieldOfView))
+//         {
+//             GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, TEXT("Evidence valid"));
+//             GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, FString::Printf(TEXT("EvidenceInPhotoPercentage %f"), DistanceMinPercentage));
+//             bEvidenceFound = true;
+//         }
+//         else
+//         {
+//             GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("Evidence not valid"));
+//         }
+//     }
+//     else
+//     {
+//         GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, TEXT("No evidence found"));
+//     }
+// }
+
 void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FVector Direction, float Range, float ConeAngle, ADetective* Detective)
 {
     TArray<FHitResult> HitResults;
-    const int32 NumTraces = 64; 
+    const int32 NumTraces = 300; // Increased number of traces for better coverage
     const float AngleIncrement = ConeAngle / NumTraces;
-    TMap<AActor*, float> VisibilityScores; 
+    TMap<AActor*, float> VisibilityScores;
     int32 TotalHits = 0;
 
     for (const auto& Actor : IgnoredActors)
@@ -43,11 +143,9 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
 
     for (int32 i = -NumTraces / 2; i <= NumTraces / 2; ++i)
     {
-        
         FRotator Rotation = FRotator(0, i * AngleIncrement, 0);
         FVector TraceDirection = Rotation.RotateVector(Direction);
 
-        
         FHitResult HitResult;
         FVector End = Origin + TraceDirection * Range;
         bool bHit = World->LineTraceSingleByChannel(HitResult, Origin, End, ECC_Visibility, Params);
@@ -62,8 +160,8 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
             if (HitActor)
             {
                 float& Score = VisibilityScores.FindOrAdd(HitActor);
-                Score += 1.0f / TotalHits; 
-                
+                Score += 1.0f / TotalHits;
+
                 if (HitActor->ActorHasTag("Evidence"))
                 {
                     DrawDebugPoint(World, HitResult.ImpactPoint, 50.f, FColor::Turquoise, false, 10.0f);
@@ -81,7 +179,7 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
     // Determine the most visible evidence
     AActor* MostVisibleEvidence = nullptr;
     float HighestScore = 0.0f;
-	
+
     for (auto& Elem : VisibilityScores)
     {
         AActor* Actor = Elem.Key;
@@ -93,7 +191,7 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
         }
     }
 
-    if (MostVisibleEvidence && HighestScore >= 0.15f) // 0.75f
+    if (MostVisibleEvidence && HighestScore >= 0.15f)
     {
         const float EvidenceLocation = (Detective->GetCamera()->GetComponentLocation() - MostVisibleEvidence->GetActorLocation()).Size();
         const float BoxTargetRadius = EvidenceLocation * 0.5f;
@@ -107,7 +205,6 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
             return;
         }
 
-        // Validate evidence considering its visibility score and angular size
         if ((BoxAngularSize <= DistanceMinPercentage + Detective->GetCamera()->FieldOfView))
         {
             GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, TEXT("Evidence valid"));
