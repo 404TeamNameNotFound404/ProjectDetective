@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../Controller/Tags/DetectiveGameplayTags.h"
 #include "ProjectDetective/Detective/Controller/DetectiveController.h"
+#include "../EvidenceSystem/EvidenceSystem.h"
 
 
 // Sets default values
@@ -62,8 +63,6 @@ void ADetective::BeginPlay()
 	OldCameraLocation = Camera->GetRelativeLocation();
 
 	DetectivePhotocamera->LastFOV = Camera->FieldOfView;
-
-	
 }
 
 // Called every frame
@@ -250,6 +249,15 @@ void ADetective::Input_TakePhoto(const FInputActionValue& InputActionValue)
 	{
 		DetectivePhotocamera->bCanTakePhoto = true;
 		FScreenshotRequest::RequestScreenshot(false);
+		
+		EvidenceSystem::ConeCastTraceWithoutSweep(GetWorld(), Camera->GetComponentLocation(), Camera->GetForwardVector(), 1000.f, RayLenght, this);
+		
+		if(EvidenceSystem::bEvidenceFound)
+		{
+			//TODO SAVE IT TO INVENTORY AS CLUE EVIDENCE OTHERWISE CRIME SCENE
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Turquoise, TEXT("Evidence saved to inventory"));
+			EvidenceSystem::bEvidenceFound = false;
+		}
 
 		if (GEngine)
 		{

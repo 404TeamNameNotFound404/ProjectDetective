@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "../DetectivePhotocamera/DetectivePhotocamera.h"
+#include "../EvidenceSystem/EvidenceManager.h"
 #include "Detective.generated.h"
 
 UCLASS(Blueprintable)
@@ -66,7 +67,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Body", meta = (AllowPrivateAccess = "true"))
 	UDetectiveInputDataAsset* InputDataAsset;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Body", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Evidence System", meta = (AllowPrivateAccess = "true"))
 	ADetectivePhotocamera* DetectivePhotocamera;
 
 	UPROPERTY()
@@ -108,7 +109,10 @@ public:
 
 	void SetWalkSpeed(float NewSpeed);
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Evidence System")
+	float RayLenght;
 
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Evidence System")
+	float ConeSize = 10.f;
 
 };
