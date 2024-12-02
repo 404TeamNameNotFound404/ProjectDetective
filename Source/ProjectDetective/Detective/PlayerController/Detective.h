@@ -91,7 +91,6 @@ private:
 	void Input_Move(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
 	void Input_Crouching(const FInputActionValue& InputActionValue);
-	void Input_Standing(const FInputActionValue& InputActionValue);
 	void Input_PhotocameraZoomIn(const FInputActionValue& InputActionValue);
 	void Input_PhotocameraZoomOut(const FInputActionValue& InputActionValue);
 	void Input_PhotocameraActive(const FInputActionValue& InputActionValue);
