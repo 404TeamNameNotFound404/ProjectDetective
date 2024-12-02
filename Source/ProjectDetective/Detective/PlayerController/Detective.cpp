@@ -28,6 +28,8 @@ ADetective::ADetective()
 	CrouchBobbing = 0.0f;
 	bCrouching = false;
 	bIsWalking = false;
+	CrouchToggle = 0;
+	CrouchLerpSpeed = 6.0f;
 	
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 	GetCapsuleComponent()->SetCapsuleRadius(PlayerWidth);
@@ -74,6 +76,21 @@ void ADetective::Tick(float DeltaTime)
 	{
 		bIsWalking = false;
 	}
+
+	if(!bCrouching)
+	{
+		const FVector CurrentLocation = Camera->GetRelativeLocation();
+		const FVector TargetLocation = OldCameraLocation; 
+		const FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, GetWorld()->GetDeltaSeconds(), CrouchLerpSpeed);
+
+		Camera->SetRelativeLocation(NewLocation);
+		
+		if (NewLocation.Equals(TargetLocation, 1.0f)) 
+		{
+			GetCapsuleComponent()->SetCapsuleHalfHeight(WalkHeight);
+			GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		}
+	}
 }
 
 
@@ -91,7 +108,7 @@ void ADetective::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Look, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Crouch, ETriggerEvent::Triggered, this, &ThisClass::Input_Crouching);
-	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Crouch, ETriggerEvent::Completed, this, &ThisClass::Input_Standing);
+	//TODO DELETE THIS FUNCTIONLastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_Crouch, ETriggerEvent::Completed, this, &ThisClass::Input_Standing);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_PhotocameraZoomIn, ETriggerEvent::Triggered, this, &ThisClass::Input_PhotocameraZoomIn);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_PhotocameraZoomOut, ETriggerEvent::Triggered, this, &ThisClass::Input_PhotocameraZoomOut);
 	LastChecked->BindNativeInputAction(InputDataAsset, DetectiveTags::InputTag_PhotocameraActive, ETriggerEvent::Triggered, this, &ThisClass::Input_PhotocameraActive);
@@ -136,7 +153,7 @@ void ADetective::Input_Look(const FInputActionValue& InputActionValue)
 
 	if (LookAxisVector.Y != 0.f)
 	{
-		const float Pitch = LookAxisVector.Y;
+		const float Pitch = -LookAxisVector.Y;
 		const float ClampedPitch = FMath::Clamp(Pitch, -90.0f, 90.0f);
 		AddControllerPitchInput(ClampedPitch * MouseSensibility);
 	}
@@ -145,22 +162,37 @@ void ADetective::Input_Look(const FInputActionValue& InputActionValue)
 void ADetective::Input_Crouching(const FInputActionValue& InputActionValue)
 {
 	const bool bCrouchPressed = InputActionValue.Get<bool>();
-
+	
 	if (bCrouchPressed)
 	{
-		bCrouching = true;
-		CrouchLocation = OldCameraLocation - FVector(0.f, 0.f, CrouchHeight);
-		Camera->SetRelativeLocation(CrouchLocation);
-		GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchHeight);
-		GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+		if (CrouchToggle == 0)
+		{
+			bCrouching = true;
+			CrouchLocation = OldCameraLocation - FVector(0.f, 0.f, CrouchHeight);
+			Camera->SetRelativeLocation(CrouchLocation);
+			GetCapsuleComponent()->SetCapsuleHalfHeight(CrouchHeight);
+			GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+			CrouchToggle = 1;
+		}
+
+		else if(bCrouching  && CrouchToggle == 1)
+		{
+			bCrouching = false;
+			//Camera->SetRelativeLocation(OldCameraLocation);
+			GetCapsuleComponent()->SetCapsuleHalfHeight(WalkHeight);
+			GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+			CrouchToggle = 0;
+		}
 	}
 }
 
+
+//TODO DELETE THIS FUNCTION
 void ADetective::Input_Standing(const FInputActionValue& InputActionValue)
 {
 	const bool bCrouchPressed = InputActionValue.Get<bool>();
-
-	if (!bCrouchPressed && bCrouching)
+	
+	if (!bCrouchPressed && bCrouching && CrouchToggle == 1)
 	{
 		bCrouching = false;
 		// const float OriginalZ = FMath::FInterpTo(CrouchLocation.Z, OldCameraLocation.Z, GetWorld()->GetDeltaSeconds(), 6.0f);
@@ -170,6 +202,8 @@ void ADetective::Input_Standing(const FInputActionValue& InputActionValue)
 		Camera->SetRelativeLocation(OldCameraLocation);
 		GetCapsuleComponent()->SetCapsuleHalfHeight(WalkHeight);
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Emerald, FString::Printf(TEXT("Crouch Toggle in standing: %d"), CrouchToggle));
+		CrouchToggle = 0;
 	}
 }
 
