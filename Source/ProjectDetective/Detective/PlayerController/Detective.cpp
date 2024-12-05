@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../Controller/Tags/DetectiveGameplayTags.h"
 #include "ProjectDetective/Detective/Controller/DetectiveController.h"
+#include "../Inventory/InventorySystem.h"
 #include "../EvidenceSystem/EvidenceSystem.h"
 
 
@@ -74,6 +75,8 @@ void ADetective::Tick(float DeltaTime)
 	{
 		bIsWalking = false;
 	}
+
+	InventorySystem::UpdateScreenshotTimer(DeltaTime);  // POSSIBILE PROBLEMA, LA FOTO VA SEMPRE INSERIRTA IN EVIDENCEPHOTO, POTREBBE CENTRARE ANCHE IL TICK
 }
 
 
@@ -248,16 +251,40 @@ void ADetective::Input_TakePhoto(const FInputActionValue& InputActionValue)
 	if(bKeyPressed && DetectivePhotocamera->bDcCameraIsActive)
 	{
 		DetectivePhotocamera->bCanTakePhoto = true;
-		FScreenshotRequest::RequestScreenshot(false);
 		
+
 		EvidenceSystem::ConeCastTraceWithoutSweep(GetWorld(), Camera->GetComponentLocation(), Camera->GetForwardVector(), 1000.f, RayLenght, this);
 		
-		if(EvidenceSystem::bEvidenceFound)
-		{
-			//TODO SAVE IT TO INVENTORY AS CLUE EVIDENCE OTHERWISE CRIME SCENE
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Turquoise, TEXT("Evidence saved to inventory"));
-			EvidenceSystem::bEvidenceFound = false;
-		}
+		// manage Screenshot
+		//InventorySystem::TakeScreenshot();
+		
+		InventorySystem::StartScreenshotProcess();
+		
+		
+
+
+
+
+
+
+
+		
+		// IF PHOTO IS NOT EVIDENCE LOGIC
+		//if(EvidenceSystem::bEvidenceFound)
+		//{
+		//	//TODO SAVE IT TO INVENTORY AS CLUE EVIDENCE OTHERWISE CRIME SCENE
+		//	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Turquoise, TEXT("Photo saved to inventory in Evidence"));
+		//	//InventorySystem::AddPhoto();
+		//	EvidenceSystem::bEvidenceFound = false;
+		//}
+		//else
+		//{
+		//	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("Photo saved to inventory in Crime Scene"));
+		//	//InventorySystem::AddPhoto();
+	   //}
+
+		
+	
 
 		if (GEngine)
 		{

@@ -223,8 +223,6 @@ void EvidenceSystem::ConeCastTraceWithoutSweep(UWorld* World, FVector Origin, FV
 }
 
 
-
-
 #pragma region MinorDetections
 
 bool EvidenceSystem::AmISeeingEvidence(ADetective* Detective, const AActor* Evidence)
@@ -265,7 +263,6 @@ bool EvidenceSystem::IsEvidenceValid(ADetective* Detective)
 
 	return false;
 }
-
 
 bool EvidenceSystem::IsEvidenceNotNull()
 {

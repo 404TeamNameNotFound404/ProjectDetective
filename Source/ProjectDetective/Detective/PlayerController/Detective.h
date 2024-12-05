@@ -11,6 +11,8 @@
 #include "../EvidenceSystem/EvidenceManager.h"
 #include "Detective.generated.h"
 
+class InventorySystem;
+
 UCLASS(Blueprintable)
 class PROJECTDETECTIVE_API ADetective : public ADBaseClass
 {
@@ -81,6 +83,10 @@ private:
 
 	UPROPERTY()
 	int CameraCounter = 0;
+
+	UPROPERTY()
+	bool bScreenShotSaved = false;
+
 
 
 	void Input_Move(const FInputActionValue& InputActionValue);
