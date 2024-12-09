@@ -49,6 +49,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	float CrouchBobbing;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	float CrouchLerpSpeed;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	bool bCrouching;
 
@@ -82,11 +85,12 @@ private:
 	UPROPERTY()
 	int CameraCounter = 0;
 
+	UPROPERTY()
+	int CrouchToggle;
 
 	void Input_Move(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
 	void Input_Crouching(const FInputActionValue& InputActionValue);
-	void Input_Standing(const FInputActionValue& InputActionValue);
 	void Input_PhotocameraZoomIn(const FInputActionValue& InputActionValue);
 	void Input_PhotocameraZoomOut(const FInputActionValue& InputActionValue);
 	void Input_PhotocameraActive(const FInputActionValue& InputActionValue);
